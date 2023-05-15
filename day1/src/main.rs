@@ -12,7 +12,6 @@ fn main() {
     for line in lines {
         let curr_line = line.unwrap();
         if curr_line == "" {
-            println!("elf #{}, calories {}", current_elve, current_elve_calories);
             if current_elve_calories > max_elve_calories {
                 max_elve = current_elve;
                 max_elve_calories = current_elve_calories;
@@ -25,10 +24,9 @@ fn main() {
             current_elve_calories = current_elve_calories + calories;
         }
     }
-    println!("elf #{}, calories {}", current_elve, current_elve_calories);
     if current_elve_calories > max_elve_calories {
         max_elve = current_elve;
         max_elve_calories = current_elve_calories;
     }
-    println!("\nelf #{} has most calories — {}", max_elve, max_elve_calories);
+    println!("elf #{} has most calories, {}", max_elve, max_elve_calories);
 }
