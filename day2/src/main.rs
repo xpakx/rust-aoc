@@ -15,6 +15,13 @@ fn main() {
     for line in lines {
         if let Ok(ln) = line {
             println!("{}", ln);
+            let mut split = ln.split(" ");
+            let elve_choice = split.next();
+            let strategy = split.next();
+            if let (Some(elve), Some(strategy)) = (elve_choice, strategy) {
+                println!("Elve: {}", elve);
+                println!("Strategy: {}", strategy);
+            }
         }
     }
     
