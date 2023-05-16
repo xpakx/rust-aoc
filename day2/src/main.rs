@@ -12,17 +12,34 @@ fn main() {
         }
     };
     let lines = io::BufReader::new(file).lines();
+    let mut result = 0;
     for line in lines {
         if let Ok(ln) = line {
-            println!("{}", ln);
             let mut split = ln.split(" ");
             let elve_choice = split.next();
             let strategy = split.next();
             if let (Some(elve), Some(strategy)) = (elve_choice, strategy) {
                 println!("Elve: {}", elve);
                 println!("Strategy: {}", strategy);
+                let shape_bonus = match strategy {
+                    "X" => 1,
+                    "Y" => 2,
+                    "Z" => 3,
+                    _ => 0
+                };
+                let result_bonus = match (elve, strategy) {
+                    ("A", "X") => 3,
+                    ("A", "Y") => 6,
+                    ("B", "Y") => 3,
+                    ("B", "Z") => 6,
+                    ("C", "X") => 6,
+                    ("C", "Z") => 3,
+                    (_, _) => 0
+                };
+                result = result + result_bonus + shape_bonus;
             }
         }
     }
+    println!("Result: {}", result);
     
 }
