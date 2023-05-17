@@ -12,20 +12,39 @@ fn main() {
         }
     };
     let mut lines = io::BufReader::new(file).lines();
+    let mut cargo: Vec<Vec<char>> = Vec::new();
     while let Some(line) = lines.next() {
         if let Ok(line) = line {
             if line == "" {
                 break;
             } else {
-                let line = parse_line(&line);
-                for c in line.iter() {
-                    print!("{}", c);
+                let row = parse_line(&line);
+                for (i, &c) in row.iter().enumerate() {
+                    if c != ' ' {
+                        let column = cargo.get_mut(i);
+                        if let Some(column) = column {
+                            if !c.is_numeric() {
+                                column.insert(0, c);
+                            }
+                        } else {
+                            for _ in 0..(i-cargo.len()+1) {
+                                cargo.push(Vec::new());
+                            }
+                            if !c.is_numeric() {
+                                cargo.get_mut(i).unwrap().insert(0, c);
+                            }
+                        }
+                    }
                 }
-                print!("\n");
             }
         }
     }   
-    print!("\n");
+    for row in cargo {
+        for elem in row {
+            print!("{}", elem);
+        }
+        print!("\n");
+    }
     while let Some(line) = lines.next() {
         if let Ok(line) = line {
             let instruction = parse_instruction(&line);
