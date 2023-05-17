@@ -3,6 +3,11 @@ use std::io::{self, BufRead};
 use std::path::Path;
 
 fn main() {
+    exercise(true);
+    exercise(false);
+}
+
+fn exercise(first_star: bool) {
     let file_path = Path::new("./input.txt");
     let file =  match File::open(&file_path){
         Ok(file) => file,
@@ -42,12 +47,22 @@ fn main() {
     while let Some(line) = lines.next() {
         if let Ok(line) = line {
             let instruction = parse_instruction(&line);
-            for _ in 0..(instruction.0) {
-                let c = cargo.get_mut(instruction.1).unwrap().pop(); 
-                if let Some(c) = c {
-                    cargo.get_mut(instruction.2).unwrap().push(c);
+            if first_star {
+                for _ in 0..(instruction.0) {
+                    let c = cargo.get_mut(instruction.1).unwrap().pop(); 
+                    if let Some(c) = c {
+                        cargo.get_mut(instruction.2).unwrap().push(c);
+                    }
                 }
+            } else {
+                let row = cargo
+                    .get_mut(instruction.1)
+                    .unwrap();
 
+                let mut v: Vec<char> = row
+                    .drain((row.len() -instruction.0 as usize)..)
+                    .collect();
+                cargo.get_mut(instruction.2).unwrap().append(&mut v);
             }
         }
     }
@@ -79,3 +94,4 @@ fn parse_line(text: &String) -> Vec<char> {
     }
     return parsed;
 }
+
