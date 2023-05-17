@@ -3,6 +3,11 @@ use std::path::Path;
 use std::collections::HashSet;
 
 fn main() {
+    find_unique(4);
+    find_unique(14);
+}
+
+fn find_unique(length: usize) {
     let file_path = Path::new("./input.txt");
     let input =  match fs::read_to_string(&file_path){
         Ok(file) => file,
@@ -13,13 +18,13 @@ fn main() {
     };
     let bytes = input.as_bytes();
 
-    for (i, c) in bytes.windows(4).enumerate() {
+    for (i, c) in bytes.windows(length).enumerate() {
         let mut set = HashSet::new();
         for w in c {
             set.insert(w);
         }
-        if set.len() == 4 {
-            println!("Result: {}", i+4);
+        if set.len() == length {
+            println!("Result: {}", i+length);
             return;
         }
     }
