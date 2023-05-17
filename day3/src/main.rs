@@ -26,6 +26,16 @@ fn get_result_for_line(line: &String) -> u32 {
     let middle = line.len() / 2;
     let first_part = &line[..middle];
     let second_part = &line[middle..];
-    println!("{} and {}", first_part, second_part);
-    return 0;
+    for byte in first_part.bytes() {
+        for byte2 in second_part.bytes() {
+            if byte == byte2 {
+                let result = match byte {
+                   b if (b>=60) && (b<=95) => (b as u32)-65+27,
+                   b => (b as u32)-96
+                };
+                return result;
+            }
+        }
+    }
+    return 0
 }
