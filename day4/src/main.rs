@@ -12,7 +12,8 @@ fn main() {
         }
     };
     let lines = io::BufReader::new(file).lines();
-    let mut result = 0;
+    let mut first_star = 0;
+    let mut second_star = 0;
     for line in lines {
         if let Ok(line) = line {
             let mut split = line.split(",");
@@ -22,12 +23,16 @@ fn main() {
                 let first = to_range(first);
                 let second = to_range(second);
                 if contains(first, second) || contains(second, first) {
-                    result += 1;
+                    first_star += 1;
+                }
+                if overlap(first, second) || overlap(second, first) {
+                    second_star += 1
                 }
             }
         }
     }
-    println!("Result: {}", result);
+    println!("First star: {}", first_star);
+    println!("Second star: {}", second_star);
 }
 
 fn to_range(text: &str) -> (u32, u32) {
@@ -43,3 +48,9 @@ fn to_range(text: &str) -> (u32, u32) {
 fn contains(first: (u32, u32), second: (u32, u32)) -> bool {
     return first.0<=second.0 && first.1>=second.1;
 }
+
+fn overlap(first: (u32, u32), second: (u32, u32)) -> bool {
+    return (second.1 >= first.0 && second.1 <= first.1) ||
+        (second.0 >= first.0 && second.0 <= first.1) 
+}
+
