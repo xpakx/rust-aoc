@@ -4,9 +4,18 @@ use std::path::Path;
 use std::collections::HashSet;
 
 fn main() {
+    move_rope(1);
+    move_rope(9);
+}
+
+fn move_rope(knots_num: usize) {
     let lines = read_input().expect("Should read from file");
     let mut head = Node { position: (0, 0) };
     let mut tail = Node { position: (0, 0) };
+    let mut knots = Vec::new();
+    for _ in 0..knots_num {
+        knots.push(Node { position: (0, 0) });
+    }
     let mut visited = HashSet::<(i32, i32)>::new();
     visited.insert((0, 0));
 
@@ -17,7 +26,12 @@ fn main() {
             for _ in 0..instruction.1 {
                 head.update_pos(to_vector(&instruction.0));
                 tail.follow(&head);
-                visited.insert(tail.position);
+                knots[0].follow(&head);
+                for i in 1..knots_num {
+                    let last = knots[i-1];
+                    knots[i].follow(&last);
+                }
+                visited.insert(knots.last().unwrap().position);
             }
         }
     }
@@ -64,6 +78,7 @@ fn parse_line(line: &String) -> Option<(Direction, u32)> {
     return Some((dir, num));
 }
 
+#[derive(Clone, Copy)]
 struct Node {
     position: (i32, i32)
 }
