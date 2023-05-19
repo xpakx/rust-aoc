@@ -33,7 +33,7 @@ fn first_star() {
             }         
         }
     }
-    print_forest(&forest);
+    // print_forest(&forest);
     println!("Result: {}", result);
 }
 
@@ -48,5 +48,56 @@ fn print_forest(forest: &Vec<Vec<char>>) {
 }
 
 fn test_field(x: usize, y: usize, forest: &Vec<Vec<char>>) -> bool {
+    let number = forest[x][y].to_digit(10).unwrap();
+    let mut empty = true;
+    for number2 in &forest[x][..y] {
+        let number2 = number2.to_digit(10).unwrap();
+        if number2 >= number {
+            empty = false;
+            break;
+        }
+    };
+    if empty {
+        return true;
+    }
+    empty = true;
+
+    for number2 in &forest[x][y+1..] {
+        let number2 = number2.to_digit(10).unwrap();
+        if number2 >= number {
+            empty = false;
+            break;
+        }
+    };
+    if empty {
+        return true;
+    }
+    empty = true;
+
+    let column: &Vec<char> = &forest[..x].iter().map(|it| it[y]).collect(); 
+    for number2 in column {
+        let number2 = number2.to_digit(10).unwrap();
+        if number2 >= number {
+            empty = false;
+            break;
+        }
+    };
+    if empty {
+        return true;
+    }
+    empty = true;
+
+    let column: &Vec<char> = &forest[x+1..].iter().map(|it| it[y]).collect(); 
+    for number2 in column {
+        let number2 = number2.to_digit(10).unwrap();
+        if number2 >= number {
+            empty = false;
+            break;
+        }
+    };
+    if empty {
+        return true;
+    }
+ 
     return false;
 }
