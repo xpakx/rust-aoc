@@ -4,6 +4,39 @@ use std::path::Path;
 
 fn main() {
     first_star();
+    second_star();
+}
+
+fn second_star() {
+    let lines = read_input().expect("Should read from file");
+    let mut reg_x: i32 = 1;
+    let mut crt_position: i32 = 0;
+    for line in lines {
+        if let Ok(line) = line {
+            let instruction = parse_line(&line)
+                .expect("Should parse instruction");
+            let cycles_used = match instruction.0 {
+                Action::Noop => 1,
+                Action::AddX => 2
+            };
+            for _ in 0..cycles_used {
+                if (crt_position-reg_x).abs() <= 1 {
+                    print!("#");
+                } else {
+                    print!(".");
+                }
+
+                crt_position +=1;
+                if crt_position % 40 == 0 {
+                    print!("\n");
+                    crt_position = 0;
+                }
+            }
+            reg_x += instruction.1;
+
+        }
+    }
+
 }
 
 fn first_star() {
