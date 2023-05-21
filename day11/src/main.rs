@@ -7,20 +7,66 @@ fn main() {
 }
 
 fn first_star() {
+    let mut id = 0;
+    let mut items = Vec::new();
+    let mut test = 0;
+    let mut id_false = 0;
+    let mut id_true = 0;
+    let mut operation = None;
+    let mut monkeys: Vec<Monkey> = Vec::new();
     let lines = read_input().expect("Should read from file");
     for line in lines {
         if let Ok(line) = line {
             let instruction = parse_line(&line);
             if instruction.is_none() {
-                print!("\n");
+                let monkey = Monkey { 
+                    id, 
+                    items: items.to_vec(), 
+                    test, 
+                    id_false, id_true, 
+                    operation: operation.unwrap()
+                };
+                println!("{:?}", monkey);
+                monkeys.push(monkey);
                 continue;
             }
             let instruction = instruction.unwrap(); 
 
+            match instruction.0 {
+                Instruction::MonkeyDef => {
+                    id = instruction.1.unwrap_or(0);
+                },
+                Instruction::Items => {
+                    items = instruction.2.as_ref().unwrap().clone();
+                },
+                Instruction::Test => {
+                    test = instruction.1.unwrap_or(0);
+                },
+                Instruction::TestTrue => {
+                    id_true = instruction.1.unwrap_or(0);
+                },
+                Instruction::TestFalse => {
+                    id_false = instruction.1.unwrap_or(0);
+                },
+                Instruction::Operation => {
+                    operation = instruction.3;
+                }
+            };
             println!("{:?}", instruction);
         }
     }
 }
+
+#[derive(Debug)]
+struct Monkey {
+    id: u32,
+    items: Vec<u32>,
+    test: u32,
+    id_true: u32,
+    id_false: u32,
+    operation: Operation
+}
+
 
 #[derive(Debug)]
 enum Instruction {
@@ -32,20 +78,20 @@ enum Instruction {
     TestFalse,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 struct Operation {
     operation: OperationType,
     first: OperationElem,
     second: OperationElem
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum OperationType {
     Add,
     Multiply
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum OperationElem {
     Old,
     Number(u32)
