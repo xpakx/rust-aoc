@@ -7,6 +7,35 @@ fn main() {
 }
 
 fn first_star() {
+    let mut monkeys = construct_monkeys();
+    let monkey_count = monkeys.len();
+    for _ in 0..20 {
+        for i in 0..monkey_count {
+            println!("Monkey {}", i);
+            let mut items = Vec::new();
+            std::mem::swap(&mut items, &mut monkeys[i].items);
+            for item in items {
+                let monkey = &mut monkeys[i];
+                monkey.monkey_business += 1;
+                let new_worry = transform(item, monkey.operation)/3;
+                let new_monkey = if new_worry % monkey.test == 0 {
+                    monkey.id_true
+                } else {
+                    monkey.id_false
+                };
+
+                monkeys[new_monkey as usize].items.push(new_worry);
+                println!("item with worry level {} is thrown to monkey {}", new_worry, new_monkey);
+            }
+        }
+    }
+
+    let mut monkey_business: Vec<u32> = monkeys.iter().map(|m| m.monkey_business).collect();
+    monkey_business.sort();
+    println!("Result: {}", monkey_business[monkey_count-1]*monkey_business[monkey_count-2]);
+}
+
+fn construct_monkeys() -> Vec<Monkey> {
     let mut id = 0;
     let mut items = Vec::new();
     let mut test = 0;
@@ -24,7 +53,8 @@ fn first_star() {
                     items: items.to_vec(), 
                     test, 
                     id_false, id_true, 
-                    operation: operation.unwrap()
+                    operation: operation.unwrap(),
+                    monkey_business: 0
                 };
                 println!("{:?}", monkey);
                 monkeys.push(monkey);
@@ -52,21 +82,37 @@ fn first_star() {
                     operation = instruction.3;
                 }
             };
-            println!("{:?}", instruction);
         }
     }
+
+    monkeys
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Monkey {
     id: u32,
     items: Vec<u32>,
     test: u32,
     id_true: u32,
     id_false: u32,
-    operation: Operation
+    operation: Operation,
+    monkey_business: u32
 }
 
+fn transform(worry: u32, op: Operation) -> u32 {
+    let first = match op.first {
+        OperationElem::Old => worry,
+        OperationElem::Number(val) => val
+    };
+    let second = match op.second {
+        OperationElem::Old => worry,
+        OperationElem::Number(val) => val
+    };
+    match op.operation {
+        OperationType::Add => first+second,
+        OperationType::Multiply => first*second
+    }
+}
 
 #[derive(Debug)]
 enum Instruction {
