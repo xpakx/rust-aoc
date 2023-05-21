@@ -4,6 +4,55 @@ use std::path::Path;
 
 fn main() {
     first_star();
+    second_star();
+}
+
+fn second_star() {
+    let mut monkeys = construct_monkeys();
+    let monkey_count = monkeys.len();
+    let modulo = monkeys.iter().map(|m| m.test).fold(1, |acc, x| acc*x);
+                println!("{}", modulo);
+
+    for _ in 0..10000 {
+        for i in 0..monkey_count {
+            let mut items = Vec::new();
+            std::mem::swap(&mut items, &mut monkeys[i].items);
+            for item in items {
+                let monkey = &mut monkeys[i];
+                monkey.monkey_business += 1;
+                let new_worry = transform_big(item, monkey.operation, modulo);
+                let new_monkey = if new_worry % monkey.test == 0 {
+                    monkey.id_true
+                } else {
+                    monkey.id_false
+                };
+
+                monkeys[new_monkey as usize].items.push(new_worry);
+            }
+        }
+    }
+
+    let mut monkey_business: Vec<u32> = monkeys.iter().map(|m| m.monkey_business).collect();
+    monkey_business.sort();
+    println!("Result: {}", (monkey_business[monkey_count-1] as u64) * (monkey_business[monkey_count-2] as u64));
+}
+
+fn transform_big(worry: u32, op: Operation, modulo: u32) -> u32 {
+    let modulo = modulo as u64;
+    let first = match op.first {
+        OperationElem::Old => worry as u64,
+        OperationElem::Number(val) => val as u64
+    };
+    let second = match op.second {
+        OperationElem::Old => worry as u64,
+        OperationElem::Number(val) => val as u64
+    };
+    let result = match op.operation {
+        OperationType::Add => (first+second) % modulo,
+        OperationType::Multiply => (first*second) % modulo
+    };
+
+    result as u32
 }
 
 fn first_star() {
@@ -11,7 +60,6 @@ fn first_star() {
     let monkey_count = monkeys.len();
     for _ in 0..20 {
         for i in 0..monkey_count {
-            println!("Monkey {}", i);
             let mut items = Vec::new();
             std::mem::swap(&mut items, &mut monkeys[i].items);
             for item in items {
@@ -25,7 +73,6 @@ fn first_star() {
                 };
 
                 monkeys[new_monkey as usize].items.push(new_worry);
-                println!("item with worry level {} is thrown to monkey {}", new_worry, new_monkey);
             }
         }
     }
@@ -56,7 +103,6 @@ fn construct_monkeys() -> Vec<Monkey> {
                     operation: operation.unwrap(),
                     monkey_business: 0
                 };
-                println!("{:?}", monkey);
                 monkeys.push(monkey);
                 continue;
             }
