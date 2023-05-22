@@ -6,8 +6,7 @@ use std::collections::HashMap;
 fn main() {
     let input = read_input().expect("Should read input from file");
     let input: Vec<&str> = input.trim().split('\n').collect();
-    let input: Vec<Vec<char>> = input.iter().map(|s| s.chars().collect()).collect();
-    println!("{:?}", input);
+    let input: Vec<Vec<u8>> = input.iter().map(|s| s.bytes().collect()).collect();
     let rows = input.len();
     let columns = input[0].len();
     let mut dist: HashMap<(usize, usize), usize> = HashMap::new();
@@ -15,7 +14,7 @@ fn main() {
     let mut q: Vec<(usize, usize)> = Vec::new();
     for x in 0..rows {
         for y in 0..columns {
-            if input[x][y] == 'S' {
+            if input[x][y] == 83 { // ascii S
                 dist.insert((x,y), 0);
             } else {
                 dist.insert((x,y), usize::MAX);
@@ -27,37 +26,64 @@ fn main() {
     while !q.is_empty() {
         let x = q.iter().min_by_key(|a| dist.get(a).unwrap_or(&usize::MAX)).unwrap();
         let point = x.clone();
-        println!("{:?}", x);
         let letter = input[point.0][point.1];
-        if letter == 'E' {
-            println!("{}", dist.get(x).unwrap());
+        if letter == 69 {  // ascii E
+            println!("Result: {}", dist.get(x).unwrap());
             break;
         }
+        let letter = match letter {
+            83 => 0,
+            69 => 25,
+            lowercase => lowercase-97
+        };
         q = q.iter().filter(|&a| a != x).map(|a| a.clone()).collect();
         let mut neighbours = Vec::new();
         if point.0 > 0 {
             let n = (point.0-1, point.1);
-            if q.contains(&n) {
+            let n_letter = match input[n.0][n.1] {
+                83 => 0,
+                69 => 25,
+                lowercase => lowercase-97
+            };
+            let achievable = letter + 1 >= n_letter;
+            if achievable && q.contains(&n) {
                 neighbours.push(n);
             }
         }
         let alt = dist.get(&point).unwrap() + 1;
-        println!("{}", alt);
-        if point.0 < columns-1 {
+        if point.0 < rows-1 {
             let n = (point.0+1, point.1);
-            if q.contains(&n) {
+            let n_letter = match input[n.0][n.1] {
+                83 => 0,
+                69 => 25,
+                lowercase => lowercase-97
+            };
+            let achievable = letter + 1 >= n_letter;
+            if achievable && q.contains(&n) {
                 neighbours.push(n);
             }
         }
         if point.1 > 0 {
             let n = (point.0, point.1-1);
-            if q.contains(&n) {
+            let n_letter = match input[n.0][n.1] {
+                83 => 0,
+                69 => 25,
+                lowercase => lowercase-97
+            };
+            let achievable = letter + 1 >= n_letter;
+            if achievable && q.contains(&n) {
                 neighbours.push(n);
             }
         }
         if point.1 < columns-1 {
             let n = (point.0, point.1+1);
-            if q.contains(&n) {
+            let n_letter = match input[n.0][n.1] {
+                83 => 0,
+                69 => 25,
+                lowercase => lowercase-97
+            };
+            let achievable = letter + 1 >= n_letter;
+            if achievable && q.contains(&n) {
                 neighbours.push(n);
             }
         }
@@ -70,9 +96,6 @@ fn main() {
             }
 
         }
-
-
-
     }
 }
 
