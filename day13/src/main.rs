@@ -7,6 +7,8 @@ fn main() {
     let mut result = 0;
     let mut i = 1;
     while let (Some(Ok(line1)), Some(Ok(line2)), _) = (lines.next(), lines.next(), lines.next()) {
+        let line1 = line1.replace("10", "A");
+        let line2 = line2.replace("10", "A");
         if test_order(&line1, &line2) {
             result += i;
         }
@@ -49,7 +51,7 @@ fn test_order(line1: &String, line2: &String) -> bool {
                return true;
            } else if chars1[i1+1] != chars2[i2] {
                i1+= 1;
-           } else if chars2[i1+2] == 93 {
+           } else if chars1[i1+2] == 93 { 
                i1+= 3;
            } else {
                return false;
