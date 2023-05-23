@@ -1,11 +1,13 @@
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Lines};
 use std::path::Path;
+use std::cmp::Ordering;
 
 fn main() {
     let mut lines = read_input().expect("Should read file");
     let mut result = 0;
     let mut i = 1;
+    let mut to_sort = Vec::new();
     while let (Some(Ok(line1)), Some(Ok(line2)), _) = (lines.next(), lines.next(), lines.next()) {
         let line1 = line1.replace("10", "A");
         let line2 = line2.replace("10", "A");
@@ -13,8 +15,27 @@ fn main() {
             result += i;
         }
         i += 1;
+        to_sort.push(line1);
+        to_sort.push(line2);
     }
-    println!("Result: {}", result);
+    println!("Result 1: {}", result);
+    to_sort.push(String::from("[[2]]"));
+    to_sort.push(String::from("[[6]]"));
+    to_sort.sort_by(|a, b| cmp_packets(a,b));
+    let index1 = to_sort.iter().position(|p| p == "[[2]]");
+    let index2 = to_sort.iter().position(|p| p == "[[6]]");
+    if let (Some(index1), Some(index2)) = (index1, index2) {
+        let key = (index1+1)*(index2+1);
+        println!("Key: {}", key);
+    }
+}
+
+fn cmp_packets(line1: &String, line2: &String) -> Ordering {
+    if test_order(line1, line2) {
+        return Ordering::Less;
+    } else {
+        return Ordering::Greater;
+    }
 }
 
 fn read_input() -> Result<Lines<BufReader<File>>, io::Error> {
