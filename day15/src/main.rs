@@ -2,7 +2,8 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader, Lines};
 use std::path::Path;
 use regex::Regex;
-use std::collections::HashSet;
+use std::ops::Range;
+use std::cmp::max;
 
 fn main() {
     let mut lines = read_input().expect("Should read file");
@@ -15,32 +16,44 @@ fn main() {
     }
 
     let line = 2000000;
-    let points_info = sensors
+    let mut ranges: Vec<Range<i32>> = sensors
         .iter()
         .map(|s| ((line-s.localization.y).abs() as u32, s))
         .filter(|s| s.0 <= s.1.distance)
-        .map(|s| ((s.1.distance - s.0) as i32, s.1.localization.x));
-    let mut points = HashSet::new();
-    for point in points_info {
-        points.insert(point.1);
-        for i in 1..point.0+1 {
-            points.insert(point.1+i);
-            points.insert(point.1-i);
+        .map(|s| ((s.1.distance - s.0) as i32, s.1.localization.x))
+        .map(|(rng, center)| (center-rng)..(center+rng))
+        .collect();
+    ranges.sort_by_key(|r| (r.start, r.end));
+    let mut merged: Vec<Range<i32>> = Vec::new();
+    merged.push(ranges[0].clone());
+    for r in ranges.iter().skip(1) {
+        let mut last_added = merged.last_mut().unwrap();
+        if r.start <= last_added.end {
+           last_added.end = max(r.end, last_added.end); 
+        } else {
+            merged.push(r.clone());
         }
     }
+
+    let mut result = 0;
+    for r in merged.iter() {
+        result += r.end - r.start + 1;
+    }
+
+
+
     let mut beacons: Vec<i32> = sensors
         .iter()
         .map(|s| s.beacon)
         .filter(|b| b.y == line)
         .map(|b| b.x)
-        .filter(|b| points.contains(b))
         .collect();
     beacons.sort_unstable();
     beacons.dedup();
 
-    let beacons_count = beacons.iter().count();
+    let beacons_count = beacons.iter().count() as i32;
 
-    println!("Result: {}", points.len() - beacons_count);
+    println!("Result: {}", result - beacons_count);
 
 }
 
