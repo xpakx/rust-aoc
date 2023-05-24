@@ -15,7 +15,53 @@ fn main() {
         };
     }
 
+    first_star(&sensors);
+    second_star(&sensors);
+
+}
+
+fn second_star(sensors: &Vec<Sensor>) -> () {
+    for line in 0..4000001 {
+        let ranges = get_ranges_for_line(line, &sensors);
+        let mut candidate = 0;
+        for range in ranges.iter() {
+            if range.contains(&candidate) {
+                candidate = range.end + 1;
+            }
+        }
+
+        if candidate <= 4000000 {
+            println!("Position: ({}, {})", line, candidate);
+            println!("Tuning frequency: {}", (candidate as i64)*4000000 + (line as i64));
+            break;
+        }
+    }
+}
+
+fn first_star(sensors: &Vec<Sensor>) -> () {
     let line = 2000000;
+    let merged: Vec<Range<i32>> = get_ranges_for_line(line, &sensors);
+
+    let mut result = 0;
+    for r in merged.iter() {
+        result += r.end - r.start + 1;
+    }
+
+    let mut beacons: Vec<i32> = sensors
+        .iter()
+        .map(|s| s.beacon)
+        .filter(|b| b.y == line)
+        .map(|b| b.x)
+        .collect();
+    beacons.sort_unstable();
+    beacons.dedup();
+
+    let beacons_count = beacons.iter().count() as i32;
+
+    println!("Result: {}", result - beacons_count);
+}
+
+fn get_ranges_for_line(line: i32, sensors: &Vec<Sensor>) -> Vec<Range<i32>>{
     let mut ranges: Vec<Range<i32>> = sensors
         .iter()
         .map(|s| ((line-s.localization.y).abs() as u32, s))
@@ -34,27 +80,7 @@ fn main() {
             merged.push(r.clone());
         }
     }
-
-    let mut result = 0;
-    for r in merged.iter() {
-        result += r.end - r.start + 1;
-    }
-
-
-
-    let mut beacons: Vec<i32> = sensors
-        .iter()
-        .map(|s| s.beacon)
-        .filter(|b| b.y == line)
-        .map(|b| b.x)
-        .collect();
-    beacons.sort_unstable();
-    beacons.dedup();
-
-    let beacons_count = beacons.iter().count() as i32;
-
-    println!("Result: {}", result - beacons_count);
-
+    merged
 }
 
 fn read_input() -> Result<Lines<BufReader<File>>, io::Error> {
