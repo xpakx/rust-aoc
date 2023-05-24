@@ -14,9 +14,39 @@ fn main() {
                 obstacles.insert(point);
             }
         }
-        println!("{:?}", points);
     }
-    println!("{:?}", obstacles);
+    let max = obstacles.iter().map(|a| a.1).max().unwrap_or(0);
+    let mut stack: Vec<(usize, usize)> = Vec::new();
+    stack.push((500,0));
+    let mut stationary = 0;
+    let mut ground_level = false;
+    while !ground_level {
+        let mut position = stack.pop().unwrap();
+        loop {
+            if position.1 == max {
+                ground_level = true;
+                break;
+            }
+            let bottom = (position.0, position.1+1);
+            let left = (position.0-1, position.1+1);
+            let right = (position.0+1, position.1+1);
+            if !obstacles.contains(&bottom) {
+                stack.push(position);
+                position = bottom;
+            } else if !obstacles.contains(&left) {
+                stack.push(position);
+                position = left;
+            } else if !obstacles.contains(&right) {
+                stack.push(position);
+                position = right;
+            } else {
+                obstacles.insert(position);
+                stationary += 1;
+                break;
+            }
+        }
+    }
+    println!("Units of sand: {}", stationary);
 }
 
 fn read_input() -> Result<Lines<BufReader<File>>, io::Error> {
