@@ -47,6 +47,35 @@ fn main() {
         }
     }
     println!("Units of sand: {}", stationary);
+    let ground = max + 2;
+    while !obstacles.contains(&(500,0)) {
+        let mut position = stack.pop().unwrap();
+        loop {
+            if position.1 == ground-1 {
+                obstacles.insert(position);
+                stationary += 1;
+                break;
+            }
+            let bottom = (position.0, position.1+1);
+            let left = (position.0-1, position.1+1);
+            let right = (position.0+1, position.1+1);
+            if !obstacles.contains(&bottom) {
+                stack.push(position);
+                position = bottom;
+            } else if !obstacles.contains(&left) {
+                stack.push(position);
+                position = left;
+            } else if !obstacles.contains(&right) {
+                stack.push(position);
+                position = right;
+            } else {
+                obstacles.insert(position);
+                stationary += 1;
+                break;
+            }
+        }
+    }
+    println!("Units of sand: {}", stationary);
 }
 
 fn read_input() -> Result<Lines<BufReader<File>>, io::Error> {
