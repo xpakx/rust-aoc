@@ -2,7 +2,6 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader, Lines};
 use std::path::Path;
 use regex::Regex;
-use std::cmp::max;
 use std::collections::HashMap;
 
 fn main() {
@@ -15,19 +14,75 @@ fn main() {
         };
     }
 
-    first_star(&valves);
-    second_star(&valves);
+    first_star(&mut valves);
+    second_star();
 
 }
 
-fn second_star(valves: &Vec<Valve>) -> () {
+fn second_star() -> () {
+    println!("Not implemented yet");
 }
 
-fn first_star(valves: &Vec<Valve>) -> () {
+fn first_star(valves: &mut Vec<Valve>) -> () {
     let mut time_left = 30;
+    let mut current_valve = String::from("AA");
     while time_left > 0 {
-        time_left -= 1;
+        let max = dijkstra(valves, time_left, &current_valve);
+        println!("Next: {}, cost: {}, pressure: {}", max.0, max.2, max.1);
+        time_left -= max.2;
+        current_valve = max.0;
+        if max.1 == 0 {
+            break;
+        }
+        println!("Time left: {}", time_left);
+        println!("Turn {}", 31-time_left);
+        for v in valves.iter_mut() {
+            if v.id == current_valve {
+                v.flow_rate = 0;
+                break;
+            }
+        }
     }
+}
+
+fn dijkstra(valves: &Vec<Valve>, time_left: usize, current_valve: &String) -> (String, usize, usize) {
+    let mut dist: HashMap<String, usize> = HashMap::new();
+    let mut q: Vec<&Valve> = Vec::new();
+    for valve in valves.iter() {
+            if valve.id == *current_valve { 
+                dist.insert(valve.id.clone(), 0);
+            } else {
+                dist.insert(valve.id.clone(), usize::MAX);
+            }
+            q.push(valve);
+    }
+
+    while !q.is_empty() {
+        let x = q.iter().min_by_key(|a| dist.get(&a.id).unwrap_or(&usize::MAX)).unwrap();
+        let point = x.clone();
+        q = q.iter().filter(|&a| a.id != x.id).map(|a| a.clone()).collect();
+        let current = dist.get(&point.id).unwrap() + 0;
+
+        for tunnel in point.tunnels.iter() {
+            let n_dist = dist.get(&tunnel.valve).unwrap();
+            let alt = current + tunnel.cost;
+            if alt < *n_dist {
+                dist.insert(tunnel.valve.clone(), alt);
+            }
+        }
+    }
+
+    valves
+        .iter()
+        .map(|v| (v.id.clone(), v.flow_rate))
+        .map(|(id, flow)| {
+            let distance = *dist.get(&id).unwrap();
+            let total_flow = if time_left <= distance + 2 {0} else {(time_left - distance - 2) * flow};
+            println!("candidate {}: flow: {}, distance: {}", id, total_flow, distance);
+            (id.clone(), total_flow, distance)
+        })
+        .max_by_key(|a| a.1)
+        .unwrap()
 }
 
 fn read_input() -> Result<Lines<BufReader<File>>, io::Error> {
