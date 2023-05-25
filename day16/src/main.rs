@@ -24,28 +24,44 @@ fn second_star() -> () {
 }
 
 fn first_star(valves: &mut Vec<Valve>) -> () {
-    let mut time_left = 30;
-    let mut current_valve = String::from("AA");
-    while time_left > 0 {
-        let max = dijkstra(valves, time_left, &current_valve);
-        println!("Next: {}, cost: {}, pressure: {}", max.0, max.2, max.1);
-        time_left -= max.2;
-        current_valve = max.0;
-        if max.1 == 0 {
-            break;
-        }
-        println!("Time left: {}", time_left);
-        println!("Turn {}", 31-time_left);
-        for v in valves.iter_mut() {
-            if v.id == current_valve {
-                v.flow_rate = 0;
-                break;
-            }
-        }
+    let mut distances = HashMap::new();
+    for valve in valves.iter() {
+        distances.insert(valve.id.clone(), dijkstra(valves, &valve.id));
     }
+    let potential_valves: Vec<(String, usize)> = valves
+        .iter()
+        .filter(|v| v.flow_rate != 0)
+        .map(|v| (v.id.clone(), v.flow_rate))
+        .collect();
+    let result = choose_valve(&distances, 30, &String::from("AA"), potential_valves);
+    println!("{}", result);
 }
 
-fn dijkstra(valves: &Vec<Valve>, time_left: usize, current_valve: &String) -> (String, usize, usize) {
+fn choose_valve(distance_map: &HashMap<String, HashMap<String, usize>>, time_left: usize, current_valve: &String, potential_valves: Vec<(String, usize)>) -> usize {
+    if time_left == 0 {
+        return 0
+    }
+    let distances = distance_map.get(current_valve).unwrap();
+    let mut max_flow = 0;
+
+    for valve in potential_valves.iter() {
+        let new_valves: Vec<(String, usize)> = potential_valves
+            .iter()
+            .filter(|a| a.0 != valve.0)
+            .map(|a| (a.0.clone(), a.1))
+            .collect();
+        let distance = distances.get(&valve.0).unwrap(); 
+        let new_time = if time_left < distance + 1 {0} else {time_left - distance - 1};
+        let flow =  new_time * valve.1;
+        let total_flow = flow + choose_valve(distance_map, new_time, &valve.0, new_valves);
+        if total_flow > max_flow {
+            max_flow = total_flow;
+        }
+    }
+    max_flow
+}
+
+fn dijkstra(valves: &Vec<Valve>, current_valve: &String) -> HashMap<String, usize> {
     let mut dist: HashMap<String, usize> = HashMap::new();
     let mut q: Vec<&Valve> = Vec::new();
     for valve in valves.iter() {
@@ -72,17 +88,15 @@ fn dijkstra(valves: &Vec<Valve>, time_left: usize, current_valve: &String) -> (S
         }
     }
 
-    valves
+    let result = valves
         .iter()
-        .map(|v| (v.id.clone(), v.flow_rate))
-        .map(|(id, flow)| {
+        .map(|v| v.id.clone())
+        .map(|id| {
             let distance = *dist.get(&id).unwrap();
-            let total_flow = if time_left <= distance + 2 {0} else {(time_left - distance - 2) * flow};
-            println!("candidate {}: flow: {}, distance: {}", id, total_flow, distance);
-            (id.clone(), total_flow, distance)
+            (id, distance)
         })
-        .max_by_key(|a| a.1)
-        .unwrap()
+    .collect();
+    result
 }
 
 fn read_input() -> Result<Lines<BufReader<File>>, io::Error> {
