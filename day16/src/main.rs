@@ -14,16 +14,26 @@ fn main() {
         };
     }
 
-    first_star(&mut valves);
-    second_star();
+    first_star(&valves);
+    second_star(&valves);
 
 }
 
-fn second_star() -> () {
-    println!("Not implemented yet");
+fn second_star(valves: &Vec<Valve>) -> () {
+    let mut distances = HashMap::new();
+    for valve in valves.iter() {
+        distances.insert(valve.id.clone(), dijkstra(valves, &valve.id));
+    }
+    let potential_valves: Vec<(String, usize)> = valves
+        .iter()
+        .filter(|v| v.flow_rate != 0)
+        .map(|v| (v.id.clone(), v.flow_rate))
+        .collect();
+    let result = choose_valve_elephant(&distances, 26, &String::from("AA"), potential_valves.clone());
+    println!("{}", result);
 }
 
-fn first_star(valves: &mut Vec<Valve>) -> () {
+fn first_star(valves: &Vec<Valve>) -> () {
     let mut distances = HashMap::new();
     for valve in valves.iter() {
         distances.insert(valve.id.clone(), dijkstra(valves, &valve.id));
@@ -57,6 +67,36 @@ fn choose_valve(distance_map: &HashMap<String, HashMap<String, usize>>, time_lef
         if total_flow > max_flow {
             max_flow = total_flow;
         }
+    }
+    max_flow
+}
+
+fn choose_valve_elephant(
+    distance_map: &HashMap<String, HashMap<String, usize>>,
+    time_left: usize, current_valve: &String,
+    potential_valves: Vec<(String, usize)>) -> usize {
+    if time_left == 0 {
+        return 0
+    }
+    let distances = distance_map.get(current_valve).unwrap();
+    let mut max_flow = 0;
+
+    for valve in potential_valves.iter() {
+        let new_valves: Vec<(String, usize)> = potential_valves
+            .iter()
+            .filter(|a| a.0 != valve.0)
+            .map(|a| (a.0.clone(), a.1))
+            .collect();
+        let distance = distances.get(&valve.0).unwrap(); 
+        let new_time = if time_left < distance + 1 {0} else {time_left - distance - 1};
+        let flow =  new_time * valve.1;
+        let total_flow = flow + choose_valve_elephant(distance_map, new_time, &valve.0, new_valves);
+        if total_flow > max_flow {
+            max_flow = total_flow;
+        }
+    }
+    if max_flow == 0 {
+        max_flow = choose_valve(distance_map, 26, &String::from("AA"), potential_valves);
     }
     max_flow
 }
