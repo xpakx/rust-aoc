@@ -15,17 +15,15 @@ fn first_star() {
     let dir_len = directions.len();
     let mut board = vec![0b1111111];
     let mut dir = 0;
-    for i in 0..2023 {
+    for i in 0..2022 {
         let rock = get_polyomino(i);
         let mut mask = polyomino_to_bit_mask(&rock);
         let rock_height = mask.len();
         let mut stopped = false;
         let mut depth = 0;
         let mut free_fall = 3;
-        println!("NEW ROCK FALLS");
 
         while !stopped {
-            println!("{}", depth);
             let direction = directions[dir%dir_len];
             if no_wall(&mask, &direction, &rock) {
                 let new_mask = if let Direction::Right = direction {
@@ -46,33 +44,28 @@ fn first_star() {
                     mask = new_mask;
                 } 
             }
+
             dir+= 1;
-                println!("After dir");
-    print_bits(&mask);
 
             if free_fall == 0 {
                 // falling
                 depth += 1;
-                if test_move(&board, depth, rock_height, &mask) {
+                if !test_move(&board, depth, rock_height, &mask) {
+                    depth -= 1;
                     let height = board.len();
+                    let mask: Vec<u8> = mask.iter().map(|b| b.clone()).rev().collect();
                     for i in 0..min(depth, rock_height) {
-                        board[height-depth+i] = board[0] | mask[i];
+                        board[height-depth+i] = board[height-depth+i] | mask[i];
                     }
                     for i in depth..rock_height {
                         board.push(mask[i]);
                     }
-
-
-                    // append additional lines
-                } else {
                     stopped = true;
                 }
             } else {
                 free_fall -= 1;
             }
-
         }
-    print_bits(&board);
     }
     println!("Height: {}", board.len() - 1);
 }
@@ -181,12 +174,7 @@ fn no_wall(mask: &Vec<u8>, dir: &Direction, shape: &Polyomino) -> bool {
 
 fn can_move(slice: &[u8], mask: &Vec<u8>) -> bool {
     let mask: Vec<u8> = mask.iter().map(|b| b.clone()).rev().collect();
-    println!("    Testing move");
-    println!("    mask");
-    print_bits(&mask);
-    println!("    slice");
-    print_slice(&slice);
-    for (i, line) in slice.iter().rev().enumerate() {
+    for (i, line) in slice.iter().enumerate() {
         if line & mask[i] != 0 {
             return false
         }
