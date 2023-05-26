@@ -26,20 +26,7 @@ fn first_star() {
         while !stopped {
             let direction = directions[dir%dir_len];
             if no_wall(&mask, &direction, &rock) {
-                let new_mask = if let Direction::Right = direction {
-                    let mut new_mask = Vec::new();
-                    for b in mask.iter() {
-                        new_mask.push(b >> 1);
-                    }
-                    new_mask
-                } else {
-                    let mut new_mask = Vec::new();
-                    for b in mask.iter() {
-                        new_mask.push(b << 1);
-                    }
-                    new_mask
-                };
-
+                let new_mask = move_horizontal(&direction, &mask);
                 if depth == 0 || test_move(&board, depth, rock_height, &new_mask) {
                     mask = new_mask;
                 } 
@@ -71,6 +58,56 @@ fn first_star() {
 }
 
 fn second_star() {
+    let input = read_input().expect("Should read input from file");
+    let directions: Vec<Direction> = parse_input(&input);
+    let dir_len = directions.len();
+    let mut board = vec![0b1111111];
+    let mut dir = 0;
+    let mut total_height = 0;
+    for i in 0..2022 {
+        let rock = get_polyomino(i);
+        let mut mask = polyomino_to_bit_mask(&rock);
+        let rock_height = mask.len();
+        let mut stopped = false;
+        let mut depth = 0;
+        let mut free_fall = 3;
+
+        while !stopped {
+            let direction = directions[dir%dir_len];
+            if no_wall(&mask, &direction, &rock) {
+                let new_mask = move_horizontal(&direction, &mask);
+                if depth == 0 || test_move(&board, depth, rock_height, &new_mask) {
+                    mask = new_mask;
+                } 
+            }
+
+            dir+= 1;
+
+            if free_fall == 0 {
+                // falling
+                depth += 1;
+                if !test_move(&board, depth, rock_height, &mask) {
+                    depth -= 1;
+                    let height = board.len();
+                    let mask: Vec<u8> = mask.iter().map(|b| b.clone()).rev().collect();
+                    for i in 0..min(depth, rock_height) {
+                        board[height-depth+i] = board[height-depth+i] | mask[i];
+                    }
+                    for i in depth..rock_height {
+                        board.push(mask[i]);
+                    }
+                    stopped = true;
+                    if depth < rock_height {
+                        total_height += rock_height - depth;
+                    }
+                }
+            } else {
+                free_fall -= 1;
+            }
+        }
+        board = simplify_board(&board);
+    }
+    println!("Height: {}", total_height);
 }
 
 fn read_input() -> Result<String, io::Error> {
@@ -204,4 +241,69 @@ fn print_slice(bits: &[u8]) -> () {
     for l in bits.iter() {
         println!("{:#09b}", l);
     }
+}
+
+fn move_horizontal(direction: &Direction, mask: &Vec<u8>) -> Vec<u8> {
+    if let Direction::Right = direction {
+        let mut new_mask = Vec::new();
+        for b in mask.iter() {
+            new_mask.push(b >> 1);
+        }
+        new_mask
+    } else {
+        let mut new_mask = Vec::new();
+        for b in mask.iter() {
+            new_mask.push(b << 1);
+        }
+        new_mask
+    }
+}
+
+fn simplify_board(board: &Vec<u8>) -> Vec<u8> {
+    let mut new_board: Vec<u8> = Vec::new();
+    for i in (0..board.len()).rev() {
+        let last = new_board.last();
+        if let Some(last) = last {
+            if last == &0b1111111 {
+                break;
+            }
+            let top_mask = !last & !board[i];
+            let mut left_mask = top_mask.clone();
+            let mut pointer = 0b1000000;
+            let mut segment = 0b0;
+            for _ in 0..7 {
+                if pointer & !board[i] == 0 {
+                    if segment != 0 && (segment & top_mask != 0) {
+                        left_mask = left_mask | segment;                        
+                    }
+                    segment = 0b0;
+                } else {
+                    segment = segment | pointer;
+                }
+                pointer = pointer >> 1;
+            }
+            let mut right_mask = top_mask.clone();
+            let mut pointer = 0b1;
+            let mut segment = 0b0;
+            for _ in 0..7 {
+                if pointer & !board[i] == 0 {
+                    if segment != 0 && (segment & top_mask != 0) {
+                        right_mask = right_mask | segment;                        
+                    }
+                    segment = 0b0;
+                } else {
+                    segment = segment | pointer;
+                }
+                pointer = pointer << 1;
+            }
+            let mask = top_mask | left_mask | right_mask;
+            let new_line = !(!board[i] & mask);
+            new_board.push(new_line);
+            
+        } else {
+            new_board.push(board[i].clone());
+        }
+    }
+
+    new_board.iter().map(|b| b.clone()).rev().collect()
 }
