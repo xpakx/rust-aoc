@@ -7,11 +7,8 @@ use std::cmp::min;
 fn main() {
     let height = first_star(2022);
     println!("Height: {}", height);
-    // second_star(1000000000000);
-    let height = second_star(49);
+    let height = second_star(1000000000000);
     println!("Height: {}", height);
-    let test = 177;
-    println!("{} : {}", first_star(test), second_star(test));
 }
 
 fn first_star(rocks: usize) -> usize {
@@ -120,18 +117,11 @@ fn second_star(rocks: usize) -> usize {
             }
         }
         board = simplify_board(&board);
-        if i == 47 || i == 177 {
-            println!("Stone {}, height {}", i, total_height);
-            for l in board.iter() {
-                println!("{:#09b}", l);
-            }
-        }
+
         heights.push(total_height);
-        let direction_for_hash = directions[dir%dir_len];
-        let hash = generate_hash(&rock, &direction_for_hash, &board);
+        let hash = generate_hash(&rock, dir%dir_len, &board);
         let elem = state_map.get(&hash);
         if let Some(elem) = elem {
-            // println!("Found cycle!");
             cycle_end = i;
             cycle_start = *elem;
             break;
@@ -139,29 +129,20 @@ fn second_star(rocks: usize) -> usize {
         state_map.insert(hash, i);
     }
 
-    println!("Cycle start at stone {}, and ends at stone {}", cycle_start, cycle_end-1);
     let max = rocks; 
-    println!("Height at start: {}", heights[cycle_start]);
-    println!("Height at end: {}", heights[cycle_end]);
     let height_before_cycle = heights[cycle_start];
-    let cycle_length = cycle_end - cycle_start - 1;
+    let cycle_length = cycle_end - cycle_start;
     let cycle_height = heights[cycle_end] - heights[cycle_start];
     let to_simulate = max - cycle_start - 1;
     
-    println!("To simulate {}", to_simulate);
     let full_cycles = to_simulate / cycle_length;
     let after_last_cycle = to_simulate % cycle_length;
-    println!("{}", after_last_cycle);
     let after_height = if after_last_cycle > 0 {
         heights[cycle_start+after_last_cycle] - heights[cycle_start]
     } else {
         0
     };
 
-    println!("Before: {}", height_before_cycle);
-    println!("Cycles: {}", full_cycles);
-    println!("Cycle height: {}", cycle_height);
-    println!("After: {}", after_height);
     let total_height = height_before_cycle + full_cycles*cycle_height + after_height;
 
     total_height
@@ -353,21 +334,17 @@ fn simplify_board(board: &Vec<u8>) -> Vec<u8> {
     new_board.iter().map(|b| b.clone()).rev().collect()
 }
 
-fn generate_hash(rock: &Polyomino, direction: &Direction, board: &Vec<u8>) -> StateKey {
+fn generate_hash(rock: &Polyomino, index_dir: usize, board: &Vec<u8>) -> StateKey {
     let poly = match rock {
         Polyomino::I90Tetromino => 0b10000000, 
-        Polyomino::XPentomino => 0b01000000,
-        Polyomino::JPentomino => 0b00100000,
-        Polyomino::ITetromino => 0b00010000,
-        Polyomino::OTetromino => 0b00001000
-    };
-    let dir = match direction {
-        Direction::Right => 0b00000010, 
-        Direction::Left =>  0b00000001
+        Polyomino::XPentomino =>   0b01000000,
+        Polyomino::JPentomino =>   0b00100000,
+        Polyomino::ITetromino =>   0b00010000,
+        Polyomino::OTetromino =>   0b00001000
     };
     let hash: Vec<u8> = board.iter().map(|b| b.clone()).collect();
     StateKey {
-        direction: dir,
+        direction: index_dir,
         rock: poly,
         map: hash
     }
@@ -375,7 +352,7 @@ fn generate_hash(rock: &Polyomino, direction: &Direction, board: &Vec<u8>) -> St
 
 #[derive(Eq, Hash, PartialEq)]
 struct StateKey {
-    direction: u8,
+    direction: usize,
     rock: u8,
     map: Vec<u8>
 }
