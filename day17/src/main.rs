@@ -5,66 +5,23 @@ use std::collections::HashMap;
 use std::cmp::min;
 
 fn main() {
-    first_star();
-    second_star();
+    let height = first_star(2022);
+    println!("Height: {}", height);
+    // second_star(1000000000000);
+    let height = second_star(49);
+    println!("Height: {}", height);
+    let test = 177;
+    println!("{} : {}", first_star(test), second_star(test));
 }
 
-fn first_star() {
-    let input = read_input().expect("Should read input from file");
-    let directions: Vec<Direction> = parse_input(&input);
-    let dir_len = directions.len();
-    let mut board = vec![0b1111111];
-    let mut dir = 0;
-    for i in 0..2022 {
-        let rock = get_polyomino(i);
-        let mut mask = polyomino_to_bit_mask(&rock);
-        let rock_height = mask.len();
-        let mut stopped = false;
-        let mut depth = 0;
-        let mut free_fall = 3;
-
-        while !stopped {
-            let direction = directions[dir%dir_len];
-            if no_wall(&mask, &direction, &rock) {
-                let new_mask = move_horizontal(&direction, &mask);
-                if depth == 0 || test_move(&board, depth, rock_height, &new_mask) {
-                    mask = new_mask;
-                } 
-            }
-
-            dir+= 1;
-
-            if free_fall == 0 {
-                // falling
-                depth += 1;
-                if !test_move(&board, depth, rock_height, &mask) {
-                    depth -= 1;
-                    let height = board.len();
-                    let mask: Vec<u8> = mask.iter().map(|b| b.clone()).rev().collect();
-                    for i in 0..min(depth, rock_height) {
-                        board[height-depth+i] = board[height-depth+i] | mask[i];
-                    }
-                    for i in depth..rock_height {
-                        board.push(mask[i]);
-                    }
-                    stopped = true;
-                }
-            } else {
-                free_fall -= 1;
-            }
-        }
-    }
-    println!("Height: {}", board.len() - 1);
-}
-
-fn second_star() {
+fn first_star(rocks: usize) -> usize {
     let input = read_input().expect("Should read input from file");
     let directions: Vec<Direction> = parse_input(&input);
     let dir_len = directions.len();
     let mut board = vec![0b1111111];
     let mut dir = 0;
     let mut total_height = 0;
-    for i in 0..2022 {
+    for i in 0..rocks {
         let rock = get_polyomino(i);
         let mut mask = polyomino_to_bit_mask(&rock);
         let rock_height = mask.len();
@@ -107,7 +64,107 @@ fn second_star() {
         }
         board = simplify_board(&board);
     }
-    println!("Height: {}", total_height);
+    total_height
+}
+
+fn second_star(rocks: usize) -> usize {
+    let input = read_input().expect("Should read input from file");
+    let directions: Vec<Direction> = parse_input(&input);
+    let dir_len = directions.len();
+    let mut board = vec![0b1111111];
+    let mut dir = 0;
+    let mut total_height = 0;
+    let mut heights = Vec::new();
+    let mut state_map = HashMap::new();
+    let mut cycle_end = 0;
+    let mut cycle_start = 0;
+    for i in 0..2022 {
+        let rock = get_polyomino(i);
+        let mut mask = polyomino_to_bit_mask(&rock);
+        let rock_height = mask.len();
+        let mut stopped = false;
+        let mut depth = 0;
+        let mut free_fall = 3;
+
+        while !stopped {
+            let direction = directions[dir%dir_len];
+            if no_wall(&mask, &direction, &rock) {
+                let new_mask = move_horizontal(&direction, &mask);
+                if depth == 0 || test_move(&board, depth, rock_height, &new_mask) {
+                    mask = new_mask;
+                } 
+            }
+
+            dir+= 1;
+
+            if free_fall == 0 {
+                // falling
+                depth += 1;
+                if !test_move(&board, depth, rock_height, &mask) {
+                    depth -= 1;
+                    let height = board.len();
+                    let mask: Vec<u8> = mask.iter().map(|b| b.clone()).rev().collect();
+                    for i in 0..min(depth, rock_height) {
+                        board[height-depth+i] = board[height-depth+i] | mask[i];
+                    }
+                    for i in depth..rock_height {
+                        board.push(mask[i]);
+                    }
+                    stopped = true;
+                    if depth < rock_height {
+                        total_height += rock_height - depth;
+                    }
+                }
+            } else {
+                free_fall -= 1;
+            }
+        }
+        board = simplify_board(&board);
+        if i == 47 || i == 177 {
+            println!("Stone {}, height {}", i, total_height);
+            for l in board.iter() {
+                println!("{:#09b}", l);
+            }
+        }
+        heights.push(total_height);
+        let direction_for_hash = directions[dir%dir_len];
+        let hash = generate_hash(&rock, &direction_for_hash, &board);
+        let elem = state_map.get(&hash);
+        if let Some(elem) = elem {
+            // println!("Found cycle!");
+            cycle_end = i;
+            cycle_start = *elem;
+            break;
+        }
+        state_map.insert(hash, i);
+    }
+
+    println!("Cycle start at stone {}, and ends at stone {}", cycle_start, cycle_end-1);
+    let max = rocks; 
+    println!("Height at start: {}", heights[cycle_start]);
+    println!("Height at end: {}", heights[cycle_end]);
+    let height_before_cycle = heights[cycle_start];
+    let cycle_length = cycle_end - cycle_start - 1;
+    let cycle_height = heights[cycle_end] - heights[cycle_start];
+    let to_simulate = max - cycle_start - 1;
+    
+    println!("To simulate {}", to_simulate);
+    let full_cycles = to_simulate / cycle_length;
+    let after_last_cycle = to_simulate % cycle_length;
+    println!("{}", after_last_cycle);
+    let after_height = if after_last_cycle > 0 {
+        heights[cycle_start+after_last_cycle] - heights[cycle_start]
+    } else {
+        0
+    };
+
+    println!("Before: {}", height_before_cycle);
+    println!("Cycles: {}", full_cycles);
+    println!("Cycle height: {}", cycle_height);
+    println!("After: {}", after_height);
+    let total_height = height_before_cycle + full_cycles*cycle_height + after_height;
+
+    total_height
 }
 
 fn read_input() -> Result<String, io::Error> {
@@ -231,18 +288,6 @@ fn test_move(board: &Vec<u8>, depth: usize, rock_height: usize, mask: &Vec<u8>) 
     can_move(current_slice, &mask) 
 }
 
-fn print_bits(bits: &Vec<u8>) -> () {
-    for l in bits.iter() {
-        println!("{:#09b}", l);
-    }
-}
-
-fn print_slice(bits: &[u8]) -> () {
-    for l in bits.iter() {
-        println!("{:#09b}", l);
-    }
-}
-
 fn move_horizontal(direction: &Direction, mask: &Vec<u8>) -> Vec<u8> {
     if let Direction::Right = direction {
         let mut new_mask = Vec::new();
@@ -306,4 +351,31 @@ fn simplify_board(board: &Vec<u8>) -> Vec<u8> {
     }
 
     new_board.iter().map(|b| b.clone()).rev().collect()
+}
+
+fn generate_hash(rock: &Polyomino, direction: &Direction, board: &Vec<u8>) -> StateKey {
+    let poly = match rock {
+        Polyomino::I90Tetromino => 0b10000000, 
+        Polyomino::XPentomino => 0b01000000,
+        Polyomino::JPentomino => 0b00100000,
+        Polyomino::ITetromino => 0b00010000,
+        Polyomino::OTetromino => 0b00001000
+    };
+    let dir = match direction {
+        Direction::Right => 0b00000010, 
+        Direction::Left =>  0b00000001
+    };
+    let hash: Vec<u8> = board.iter().map(|b| b.clone()).collect();
+    StateKey {
+        direction: dir,
+        rock: poly,
+        map: hash
+    }
+}
+
+#[derive(Eq, Hash, PartialEq)]
+struct StateKey {
+    direction: u8,
+    rock: u8,
+    map: Vec<u8>
 }
