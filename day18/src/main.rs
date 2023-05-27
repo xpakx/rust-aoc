@@ -15,7 +15,10 @@ fn main() {
 
     let first = first_star(&cubes);
     println!("First star: {}", first);
-    second_star(&cubes);
+    let max = max_value(&cubes);
+    let min = min_value(&cubes);
+    let second = second_star(&cubes, min, max);
+    println!("First star: {}", second);
 
 }
 
@@ -31,7 +34,53 @@ fn first_star(cubes: &HashSet<Coord>) -> usize {
         .sum()
 }
 
-fn second_star(cubes: &HashSet<Coord>) -> () {
+fn second_star(cubes: &HashSet<Coord>, min: i32, max: i32) -> usize {
+    let mut curr = vec![Coord {x:0, y:0, z:0}];
+    let mut visited = HashSet::new();
+    let mut result = 0;
+    while !curr.is_empty() {
+        let mut new_curr = Vec::new();
+        while let Some(a) = curr.pop() {
+            let neighbours: Vec<Coord> = neighbours(&a)
+                .into_iter()
+                .filter(|n| n.x >= min && n.x <= max)
+                .filter(|n| n.y >= min && n.y <= max)
+                .filter(|n| n.z >= min && n.z <= max)
+                .collect();
+            for n in neighbours {
+                if cubes.contains(&n) {
+                    result += 1;
+                } else if !visited.contains(&n) {
+                    new_curr.push(n);
+                    visited.insert(n);
+                }
+            }
+        }
+        curr = new_curr;
+    }
+    result
+}
+
+
+
+fn max_value(cubes: &HashSet<Coord>) -> i32 {
+    cubes
+        .iter()
+        .map(|a| 
+            vec![a.x, a.y, a.z].iter().max().unwrap().clone()
+        )
+        .max()
+        .unwrap() + 1
+}
+
+fn min_value(cubes: &HashSet<Coord>) -> i32 {
+    cubes
+        .iter()
+        .map(|a| 
+            vec![a.x, a.y, a.z].iter().min().unwrap().clone()
+        )
+        .min()
+        .unwrap() - 1
 }
 
 fn read_input() -> Result<Lines<BufReader<File>>, io::Error> {
@@ -71,7 +120,7 @@ fn parse_line(line: &String) -> Option<Coord> {
     Some(Coord {x, y, z})
 }
 
-#[derive(Eq, Hash, PartialEq)]
+#[derive(Eq, Hash, PartialEq, Clone, Copy, Debug)]
 struct Coord {
     x: i32,
     y: i32,
