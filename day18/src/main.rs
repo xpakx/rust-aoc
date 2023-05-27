@@ -5,23 +5,33 @@ use std::collections::HashSet;
 
 fn main() {
     let mut lines = read_input().expect("Should read file");
-    let mut vortices = HashSet::new();
+    let mut cubes = HashSet::new();
     while let Some(Ok(line)) = lines.next() {
         match parse_line(&line) {
-            Some(coord) => { vortices.insert(coord);},
+            Some(coord) => { cubes.insert(coord);},
             None => {}
         };
     }
 
-    first_star(&vortices);
-    second_star(&vortices);
+    let first = first_star(&cubes);
+    println!("First star: {}", first);
+    second_star(&cubes);
 
 }
 
-fn second_star(valves: &HashSet<Coord>) -> () {
+fn first_star(cubes: &HashSet<Coord>) -> usize {
+    cubes
+        .iter()
+        .map(|cube| {
+            neighbours(&cube)
+                .iter()
+                .filter(|n| !cubes.contains(n))
+                .count()
+        })
+        .sum()
 }
 
-fn first_star(valves: &HashSet<Coord>) -> () {
+fn second_star(cubes: &HashSet<Coord>) -> () {
 }
 
 fn read_input() -> Result<Lines<BufReader<File>>, io::Error> {
@@ -63,7 +73,18 @@ fn parse_line(line: &String) -> Option<Coord> {
 
 #[derive(Eq, Hash, PartialEq)]
 struct Coord {
-    x: usize,
-    y: usize,
-    z: usize,
+    x: i32,
+    y: i32,
+    z: i32,
+}
+
+fn neighbours(coord: &Coord) -> Vec<Coord> {
+    let mut result = Vec::new();
+    result.push(Coord {x: coord.x - 1, y: coord.y, z: coord.z});
+    result.push(Coord {x: coord.x + 1, y: coord.y, z: coord.z});
+    result.push(Coord {x: coord.x, y: coord.y - 1, z: coord.z});
+    result.push(Coord {x: coord.x, y: coord.y + 1, z: coord.z});
+    result.push(Coord {x: coord.x, y: coord.y, z: coord.z - 1});
+    result.push(Coord {x: coord.x, y: coord.y, z: coord.z + 1});
+    result
 }
