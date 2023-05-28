@@ -33,6 +33,10 @@ fn find_max_geodes_production(blueprint: &Blueprint) -> usize {
     let mut states = Vec::new();
     let mut visited = HashSet::new();
     let mut max_geodes = 0;
+    let max_ore_cost = vec![blueprint.ore_bot_cost, blueprint.clay_bot_cost, blueprint.obsidian_bot_cost, blueprint.geode_bot_cost]
+        .into_iter()
+        .max()
+        .unwrap_or(0);
     states.push(State {
         ore: 0,
         clay: 0,
@@ -90,19 +94,21 @@ fn find_max_geodes_production(blueprint: &Blueprint) -> usize {
                 }
             }
 
-            new_states.push(State {
-                ore: state.ore + state.ore_bots,
-                clay: state.clay + state.clay_bots,
-                obsidian: state.obsidian + state.obsidian_bots,
-                geode: state.geode + state.geode_bots,
-                ore_bots: state.ore_bots,
-                clay_bots: state.clay_bots,
-                obsidian_bots: state.obsidian_bots,
-                geode_bots: state.geode_bots
-            });
-            let geode = state.geode + state.geode_bots;
-            if geode > max_geodes {
-                max_geodes = geode;
+            if state.ore <= max_ore_cost {
+                new_states.push(State {
+                    ore: state.ore + state.ore_bots,
+                    clay: state.clay + state.clay_bots,
+                    obsidian: state.obsidian + state.obsidian_bots,
+                    geode: state.geode + state.geode_bots,
+                    ore_bots: state.ore_bots,
+                    clay_bots: state.clay_bots,
+                    obsidian_bots: state.obsidian_bots,
+                    geode_bots: state.geode_bots
+                });
+                let geode = state.geode + state.geode_bots;
+                if geode > max_geodes {
+                    max_geodes = geode;
+                }
             }
         }
         states = new_states;
