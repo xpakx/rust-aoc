@@ -24,12 +24,12 @@ fn main() {
 fn first_star(blueprints: &Vec<Blueprint>) -> usize {
     blueprints
         .iter()
-        .map(|b| (b.id, find_max_geodes_production(b)))
-        .map(|(b, g)| {println!("{} = {}", b, g); b*g})
+        .map(|b| (b.id, find_max_geodes_production(b, 24)))
+        .map(|(b, g)| b*g)
         .sum()
 }
 
-fn find_max_geodes_production(blueprint: &Blueprint) -> usize {
+fn find_max_geodes_production(blueprint: &Blueprint, minutes: usize) -> usize {
     let mut states = Vec::new();
     let mut visited = HashSet::new();
     let mut max_geodes = 0;
@@ -47,12 +47,13 @@ fn find_max_geodes_production(blueprint: &Blueprint) -> usize {
         obsidian_bots: 0,
         geode_bots: 0
     });
-    for _ in 0..24 {
+    for i in 0..minutes {
         let mut new_states = Vec::new();
         while let Some(state) = states.pop() {
             if blueprint.ore_bot_cost <= state.ore && state.ore_bots <= max_ore_cost {
                 let new_state = generate_new_state(&blueprint, &state, &BotType::Ore);
-                if !visited.contains(&new_state) {
+                let max_potential_geodes = new_state.geode + (minutes-i)*(new_state.geode_bots+minutes-i);
+                if !visited.contains(&new_state) && max_potential_geodes > max_geodes {
                     new_states.push(new_state);
                     visited.insert(new_state);
                     if new_state.geode > max_geodes {
@@ -63,7 +64,8 @@ fn find_max_geodes_production(blueprint: &Blueprint) -> usize {
 
             if blueprint.clay_bot_cost <= state.ore && state.clay_bots <= blueprint.obsidian_bot_clay_cost {
                 let new_state = generate_new_state(&blueprint, &state, &BotType::Clay);
-                if !visited.contains(&new_state) {
+                let max_potential_geodes = new_state.geode + (minutes-i)*(new_state.geode_bots+minutes-i);
+                if !visited.contains(&new_state) && max_potential_geodes > max_geodes {
                     new_states.push(new_state);
                     visited.insert(new_state);
                     if new_state.geode > max_geodes {
@@ -74,7 +76,8 @@ fn find_max_geodes_production(blueprint: &Blueprint) -> usize {
 
             if blueprint.obsidian_bot_cost <= state.ore && blueprint.obsidian_bot_clay_cost <= state.clay && state.obsidian_bots <= blueprint.geode_bot_obsidian_cost  {
                 let new_state = generate_new_state(&blueprint, &state, &BotType::Obsidian);
-                if !visited.contains(&new_state) {
+                let max_potential_geodes = new_state.geode + (minutes-i)*(new_state.geode_bots+minutes-i);
+                if !visited.contains(&new_state) && max_potential_geodes > max_geodes {
                     new_states.push(new_state);
                     visited.insert(new_state);
                     if new_state.geode > max_geodes {
@@ -117,7 +120,11 @@ fn find_max_geodes_production(blueprint: &Blueprint) -> usize {
 }
 
 fn second_star(blueprints: &Vec<Blueprint>) -> usize {
-    0
+    blueprints
+        .iter()
+        .take(3)
+        .map(|b| find_max_geodes_production(b, 32))
+        .product()
 }
 
 enum BotType {
