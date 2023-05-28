@@ -50,7 +50,7 @@ fn find_max_geodes_production(blueprint: &Blueprint) -> usize {
     for _ in 0..24 {
         let mut new_states = Vec::new();
         while let Some(state) = states.pop() {
-            if blueprint.ore_bot_cost <= state.ore {
+            if blueprint.ore_bot_cost <= state.ore && state.ore_bots <= max_ore_cost {
                 let new_state = generate_new_state(&blueprint, &state, &BotType::Ore);
                 if !visited.contains(&new_state) {
                     new_states.push(new_state);
@@ -61,7 +61,7 @@ fn find_max_geodes_production(blueprint: &Blueprint) -> usize {
                 }
             }
 
-            if blueprint.clay_bot_cost <= state.ore {
+            if blueprint.clay_bot_cost <= state.ore && state.clay_bots <= blueprint.obsidian_bot_clay_cost {
                 let new_state = generate_new_state(&blueprint, &state, &BotType::Clay);
                 if !visited.contains(&new_state) {
                     new_states.push(new_state);
@@ -72,7 +72,7 @@ fn find_max_geodes_production(blueprint: &Blueprint) -> usize {
                 }
             }
 
-            if blueprint.obsidian_bot_cost <= state.ore && blueprint.obsidian_bot_clay_cost <= state.clay {
+            if blueprint.obsidian_bot_cost <= state.ore && blueprint.obsidian_bot_clay_cost <= state.clay && state.obsidian_bots <= blueprint.geode_bot_obsidian_cost  {
                 let new_state = generate_new_state(&blueprint, &state, &BotType::Obsidian);
                 if !visited.contains(&new_state) {
                     new_states.push(new_state);
@@ -94,7 +94,7 @@ fn find_max_geodes_production(blueprint: &Blueprint) -> usize {
                 }
             }
 
-            if state.ore <= max_ore_cost {
+            if state.ore <= max_ore_cost && state.ore_bots <= max_ore_cost {
                 new_states.push(State {
                     ore: state.ore + state.ore_bots,
                     clay: state.clay + state.clay_bots,
