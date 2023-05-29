@@ -50,8 +50,64 @@ fn calculate(monkey_id: &String, monkeys: &HashMap<String, Monkey>) -> usize {
     }
 }
 
-fn second_star(_monkeys: &HashMap<String, Monkey>) -> usize {
-    0
+fn get_human_path(monkey_id: &String, monkeys: &HashMap<String, Monkey>) -> Option<Vec<String>> {
+    if monkey_id == &"humn" {
+        return Some(vec![String::from("humn")]);
+    }
+    let monkey = monkeys.get(monkey_id).unwrap();
+    if let Some(_) = monkey.number {
+        return None
+    }
+    if let Some(child) = monkey.first_child.clone() {
+        if let Some(mut result) = get_human_path(&child, &monkeys) {
+            result.insert(0, monkey_id.clone());
+            return Some(result);
+        }
+    }
+    if let Some(child) = monkey.second_child.clone() {
+        if let Some(mut result) = get_human_path(&child, &monkeys) {
+            result.insert(0, monkey_id.clone());
+            return Some(result);
+        }
+    }
+    None
+}
+
+fn second_star(monkeys: &HashMap<String, Monkey>) -> usize {
+    let human = get_human_path(&String::from("root"), &monkeys).unwrap();
+    let mut target = 0;
+    for i in 0..human.len()-1 {
+        let id = human[i].clone();
+        let id_next = human[i+1].clone();
+        let current = monkeys.get(&String::from(&id)).unwrap();
+        let first_child = current.first_child.clone().unwrap();
+        let second_child = current.second_child.clone().unwrap();
+        let first = first_child == id_next;
+        let other_child = match first {
+            false => first_child,
+            true => second_child
+        };
+        let other = calculate(&other_child, &monkeys);
+        if id == "root" {
+            target = other;
+        } else {
+            let operation = current.operation.clone().unwrap();
+            match operation {
+                Operation::Addition => target = target - other,
+                Operation::Multiplication => target = target / other,
+                Operation::Subtraction => match first {
+                    true => target = target + other,
+                    false => target = other - target
+                },
+                Operation::Division => match first {
+                    true => target = target * other,
+                    false => target = other / target
+                }
+            };
+        }
+    }
+
+    target
 }
 
 fn read_input() -> Result<Lines<BufReader<File>>, io::Error> {
