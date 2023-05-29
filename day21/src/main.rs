@@ -10,7 +10,6 @@ fn main() {
     while let Some(Ok(line)) = lines.next() {
         match parse_line(&line) {
             Some(monkey) => { 
-                println!("{:?}", monkey);
                 monkeys.insert(monkey.id.clone(), monkey);
             },
             None => {}
@@ -25,11 +24,33 @@ fn main() {
 }
 
 fn first_star(monkeys: &HashMap<String, Monkey>) -> usize {
-
-    0
+    calculate(&String::from("root"), &monkeys)
 }
 
-fn second_star(monkeys: &HashMap<String, Monkey>) -> usize {
+
+fn calculate(monkey_id: &String, monkeys: &HashMap<String, Monkey>) -> usize {
+    let monkey = monkeys.get(monkey_id).unwrap();
+    if let Some(num) = monkey.number {
+        return num;
+    }
+    let num1 = if let Some(child) = monkey.first_child.clone() {
+        calculate(&child, &monkeys)
+    } else {0};
+    let num2 = if let Some(child) = monkey.second_child.clone() {
+        calculate(&child, &monkeys)
+    } else {0};
+    match monkey.operation {
+        Some(o) => match o {
+            Operation::Addition => num1 + num2,
+            Operation::Multiplication => num1 * num2,
+            Operation::Subtraction => num1 - num2,
+            Operation::Division => num1 / num2
+        },
+        None => 0
+    }
+}
+
+fn second_star(_monkeys: &HashMap<String, Monkey>) -> usize {
     0
 }
 
@@ -55,14 +76,12 @@ fn parse_line(line: &String) -> Option<Monkey> {
             "+" => Operation::Addition,
             "-" => Operation::Subtraction,
             _ => Operation::Division,
-            };
+        };
         return Some(Monkey {
             id: id,
             first_child: Some(id_first),
             second_child: Some(id_second),
             operation: Some(operation),
-            first_number: None,
-            second_number: None,
             number: None,
         });
     }
@@ -75,8 +94,6 @@ fn parse_line(line: &String) -> Option<Monkey> {
             first_child: None,
             second_child: None,
             operation: None,
-            first_number: None,
-            second_number: None,
             number: Some(number),
         });
     }
@@ -90,11 +107,9 @@ struct Monkey {
     operation: Option<Operation>,
     first_child: Option<String>,
     second_child: Option<String>,
-    first_number: Option<usize>,
-    second_number: Option<usize>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum Operation {
     Addition,
     Multiplication,
