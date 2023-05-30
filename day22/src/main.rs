@@ -14,7 +14,7 @@ fn main() {
     let start: (usize, usize) = get_starting_position(&map[0]).expect("First row should contain open position");
     let height = first_star(&map2, &instructions, &start);
     println!("First star: {}", height);
-    let height = second_star();
+    let height = second_star(&map, &instructions, &start);
     println!("Second star: {}", height);
 }
 
@@ -36,8 +36,75 @@ fn first_star(map: &Vec<Vec<Tile>>, instructions: &Vec<Move>, start: &(usize, us
     return (1 + position.0) * 1000 + (1 + position.1) * 4 + direction.value()
 }
 
-fn second_star() -> usize {
+fn second_star(map: &Vec<Vec<Tile>>, instructions: &Vec<Move>, start: &(usize, usize)) -> usize {
+    construct_cubes(map);
     0
+}
+
+fn construct_cubes(map: &Vec<Vec<Tile>>) -> () {
+    let mut cube = Cube::from(&map);
+
+}
+
+#[derive(Debug)]
+struct Cube {
+    sides: Vec<Vec<Plane>>
+}
+
+impl Cube {
+    pub fn from(map: &Vec<Vec<Tile>>) -> Self {
+        let max_row_len = map
+            .iter()
+            .map(|row| row.len())
+            .max()
+            .unwrap();
+        let column_len = map.len();
+        let (columns, rows, size) = match (column_len, max_row_len) {
+            (c, r) if c/4 == r/3 => (4, 3, c/4),
+            (c, r) if c/3 == r/4 => (3, 4, c/3),
+            (c, r) if c/5 == r/2 => (5, 3, c/5),
+            (c, r) if c/2 == r/5 => (2, 5, c/2),
+            (_,_) => panic!(""),
+        };
+        let mut sides = Vec::new();
+        for i in 0..columns {
+            let mut new_row = Vec::new();
+            for j in 0..rows {
+               if size*i >= map.len() || size*j >= map[size*i].len() {
+                   new_row.push(Plane::Empty);
+               } else if let Tile::Nothing = map[size*i][size*j]  {
+                   new_row.push(Plane::Empty);
+               } else {
+                   let mut plane = Vec::new();
+                   for ip in size*i..(size*i+size) {
+                       let mut plane_row = Vec::new();
+                       for jp in size*j..(size*j+size) {
+                           plane_row.push(PlaneTile {
+                               tile: map[ip][jp].clone(),
+                               coord: (ip, jp)
+                           });
+                       }
+                       plane.push(plane_row);
+                   }
+                   new_row.push(Plane::Board(plane));
+               }
+            }
+            sides.push(new_row);
+        }
+        return Cube {sides}
+    }
+}
+
+#[derive(Debug)]
+enum Plane {
+    Empty,
+    Board(Vec<Vec<PlaneTile>>)
+}
+
+#[derive(Debug)]
+struct PlaneTile {
+    tile: Tile,
+    coord: (usize, usize)
 }
 
 fn find_achievable_position(map: &Vec<Vec<Tile>>, start: &(usize, usize), steps: &u32, direction: &Direction) -> (usize, usize) {
@@ -141,7 +208,7 @@ fn append_empty_tiles(map: &Vec<Vec<Tile>>) -> Vec<Vec<Tile>> {
     .collect()
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum Tile {
     Wall,
     Floor,
