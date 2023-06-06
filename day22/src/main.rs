@@ -36,13 +36,39 @@ fn first_star(map: &Vec<Vec<Tile>>, instructions: &Vec<Move>, start: &(usize, us
     return (1 + position.0) * 1000 + (1 + position.1) * 4 + direction.value()
 }
 
-fn second_star(map: &Vec<Vec<Tile>>, instructions: &Vec<Move>, start: &(usize, usize)) -> usize {
+fn second_star(map: &Vec<Vec<Tile>>, _instructions: &Vec<Move>, _start: &(usize, usize)) -> usize {
     construct_cubes(map);
     0
 }
 
 fn construct_cubes(map: &Vec<Vec<Tile>>) -> () {
     let mut cube = Cube::from(&map);
+    for i in cube.sides.iter() {
+        for j in i.iter() {
+            match j {
+                Plane::Empty => print!("."),
+                Plane::Board(_) => print!("#"),
+            }
+        }
+    println!("");
+    }
+    for i in cube.sides.iter() {
+        for j in i.iter() {
+            match j.rotated(-1) {
+                Plane::Empty => {},
+                Plane::Board(plane) => {
+                    for a in plane.iter() {
+                        for b in a.iter() {
+                            print!("{:?}", b.tile);
+                        }
+                        println!("");
+                    }
+                },
+            }
+        }
+    println!("");
+    }
+
 
 }
 
@@ -101,7 +127,46 @@ enum Plane {
     Board(Vec<Vec<PlaneTile>>)
 }
 
-#[derive(Debug)]
+impl Plane {
+    fn rotated(&self, n_clockwise: isize) -> Plane {
+        match self {
+            Self::Empty => Plane::Empty,
+            Self::Board(tiles) => {
+                match (n_clockwise).rem_euclid(4) {
+                    0 => Plane::Board(tiles.iter().cloned().collect()),
+                    1 => { 
+                        let mut new_plane = Vec::new();
+                        for i in 0..tiles[0].len() {
+                            let row: Vec<PlaneTile> = tiles[..].iter().map(|it| it[i].clone()).rev().collect();
+                            new_plane.push(row);
+                        }
+                        Plane::Board(new_plane)
+                    },
+                    2 => {
+                        let mut new_plane = Vec::new();
+                        for i in (0..tiles.len()).rev() {
+                            let row: Vec<PlaneTile> = tiles[i].iter().map(|a| a.clone()).rev().collect();
+                            new_plane.push(row);
+                        }
+                        Plane::Board(new_plane)
+                    },
+                    3 => {
+                        let mut new_plane = Vec::new();
+                        for i in (0..tiles[0].len()).rev() {
+                            let row: Vec<PlaneTile> = tiles[..].iter().map(|it| it[i].clone()).collect();
+                            new_plane.push(row);
+                        }
+                        Plane::Board(new_plane)
+                    },
+                    _ => Plane::Empty,
+                }
+            }
+        }
+        
+    }
+}
+
+#[derive(Debug, Clone)]
 struct PlaneTile {
     tile: Tile,
     coord: (usize, usize)
