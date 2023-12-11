@@ -11,7 +11,7 @@ fn second_star() {
     let mut monkeys = construct_monkeys();
     let monkey_count = monkeys.len();
     let modulo = monkeys.iter().map(|m| m.test).fold(1, |acc, x| acc*x);
-                println!("{}", modulo);
+    println!("modulo: {}", modulo);
 
     for _ in 0..10000 {
         for i in 0..monkey_count {
@@ -83,7 +83,6 @@ fn first_star() {
 }
 
 fn construct_monkeys() -> Vec<Monkey> {
-    let mut id = 0;
     let mut items = Vec::new();
     let mut test = 0;
     let mut id_false = 0;
@@ -96,7 +95,6 @@ fn construct_monkeys() -> Vec<Monkey> {
             let instruction = parse_line(&line);
             if instruction.is_none() {
                 let monkey = Monkey { 
-                    id, 
                     items: items.to_vec(), 
                     test, 
                     id_false, id_true, 
@@ -109,9 +107,7 @@ fn construct_monkeys() -> Vec<Monkey> {
             let instruction = instruction.unwrap(); 
 
             match instruction.0 {
-                Instruction::MonkeyDef => {
-                    id = instruction.1.unwrap_or(0);
-                },
+                Instruction::MonkeyDef => {},
                 Instruction::Items => {
                     items = instruction.2.as_ref().unwrap().clone();
                 },
@@ -130,13 +126,20 @@ fn construct_monkeys() -> Vec<Monkey> {
             };
         }
     }
+    let monkey = Monkey { 
+        items: items.to_vec(), 
+        test, 
+        id_false, id_true, 
+        operation: operation.unwrap(),
+        monkey_business: 0
+    };
+    monkeys.push(monkey);
 
     monkeys
 }
 
 #[derive(Debug, Clone)]
 struct Monkey {
-    id: u32,
     items: Vec<u32>,
     test: u32,
     id_true: u32,

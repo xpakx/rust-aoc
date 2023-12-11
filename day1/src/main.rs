@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::{self, BufRead};
 
 fn main() {
+    first_star();
     second_star();
 }
 

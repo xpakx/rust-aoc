@@ -75,7 +75,7 @@ fn second_star(rocks: usize) -> usize {
     let mut state_map = HashMap::new();
     let mut cycle_end = 0;
     let mut cycle_start = 0;
-    for i in 0..2022 {
+    for i in 0..10000 {
         let rock = get_polyomino(i);
         let mut mask = polyomino_to_bit_mask(&rock);
         let rock_height = mask.len();
