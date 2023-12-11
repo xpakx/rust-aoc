@@ -55,41 +55,87 @@ fn test_order(line1: &String, line2: &String) -> bool {
     let len = chars1.len();
     let mut i1 = 0;
     let mut i2 = 0;
-    while i1 < len{
-       if chars1[i1] == chars2[i2] {
-           i1+= 1;
-           i2+= 1;
-       } else if chars1[i1] == 44 { // skip comma
-           i1+= 1;
-       } else if chars2[i2] == 44 {
-           i2+= 1;
-       } else if chars1[i1] == 93 { // ascii for ]
-           return true;
-       } else if chars2[i2] == 93 {
-           return false;
-       } else if chars1[i1] == 91 { // ascii for [
-           if chars1[i1+1] == 93 {
-               return true;
-           } else if chars1[i1+1] != chars2[i2] {
-               i1+= 1;
-           } else if chars1[i1+2] == 93 { 
-               i1+= 3;
-           } else {
-               return false;
-           }
-       } else if chars2[i2] == 91 { // ascii for [
-           if chars2[i2+1] == 93 {
-               return false;
-           } else if chars2[i2+1] != chars1[i1] {
-               i2+= 1;
-           } else if chars2[i2+2] == 93 {
-               i2+= 3;
-           } else {
-               return true;
-           }
-       } else {
-           return chars1[i1] < chars2[i2];
-       }
+    let mut bracket1 = 0;
+    let mut skip_brackets1 = false;
+    let mut bracket2 = 0;
+    let mut skip_brackets2 = false;
+    while i1 < len {
+        if skip_brackets1 {
+            if chars1[i1] == 93 {
+                bracket1 -= 1;
+                i1 += 1;
+            } else {
+                return false;
+            }
+            if bracket1 == 0 {
+                skip_brackets1 = false;
+            }
+        } else if skip_brackets2 {
+            if chars2[i2] == 93 {
+                bracket2 -= 1;
+                i2 += 1;
+            } else {
+                return true;
+            }
+            if bracket2 == 0 {
+                skip_brackets2 = false;
+            }
+        } else if bracket1 > 0 {
+            if chars1[i1] == 44 {
+                panic!("Shouldn't happen!");
+            } else if chars1[i1] == 93 {
+                return true;
+            } else if chars1[i1] == 91 {
+                bracket1 += 1;
+                i1 += 1;
+            } else {
+                if chars1[i1] < chars2[i2] {
+                    return true;
+                } else if chars1[i1] > chars2[i2] {
+                    return false;
+                }
+                i1 += 1;
+                i2 += 1;
+                skip_brackets1 = true
+            }
+        } else if bracket2 > 0 {
+            if chars2[i2] == 44 {
+                panic!("Shouldn't happen!");
+            } else if chars2[i2] == 93 {
+                return false;
+            } else if chars2[i2] == 91 {
+                bracket2 += 1;
+                i2 += 1;
+            } else {
+                if chars1[i1] < chars2[i2] {
+                    return true;
+                } else if chars1[i1] > chars2[i2] {
+                    return false;
+                }
+                i2 += 1;
+                i1 += 1;
+                skip_brackets2 = true
+            }
+        } else if chars1[i1] == chars2[i2] {
+            i1+= 1;
+            i2+= 1;
+        } else if chars1[i1] == 44 { // skip comma
+            i1+= 1;
+        } else if chars2[i2] == 44 {
+            i2+= 1;
+        } else if chars1[i1] == 93 { // ascii for ]
+            return true;
+        } else if chars2[i2] == 93 {
+            return false;
+        } else if chars1[i1] == 91 {
+            i1 += 1;
+            bracket1 += 1;
+        } else if chars2[i2] == 91 {
+            i2 += 1;
+            bracket2 += 1;
+        } else {
+            return chars1[i1] < chars2[i2];
+        }
     }
     return false;
 }
